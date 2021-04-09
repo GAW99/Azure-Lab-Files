@@ -106,3 +106,61 @@ Param(
         Get-ChildItem -Path X:\ -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
         Get-PSDrive -Name X -ErrorAction SilentlyContinue | Remove-PSDrive -Force 
 }
+
+function Enable-ExchMBXCertificate
+{
+Param(
+    [PARAMETER(Mandatory = $false)][switch]$Informative = $false,
+    [PARAMETER(Mandatory = $false)][switch]$Detailed = $false,
+    [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
+    [PARAMETER(Mandatory = $true)][string]$CertThumbprint,
+    [PARAMETER(Mandatory = $true)][string]$MBXServerName
+    )
+
+        if($Informative -or $Detailed) {Write-Host "The session to the server $MBXServerName is being established..." -ForegroundColor Cyan }
+        $CurrentConnectionURL = ("http://"+$MBXServerName+"/powershell/") 
+        $Session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri ("http://"+$MBXServerName+"/powershell/") -Credential $Creds -Authentication Kerberos
+        Import-PSSession $Session -DisableNameChecking -AllowClobber
+        if($Informative -or $Detailed) {Write-Host "Enabling the certificate on the server $MBXServerName" -ForegroundColor Cyan }
+        Get-ExchangeCertificate -Server $MBXServerName -Thumbprint $CertThumbprint | Enable-ExchangeCertificate -Services IIS -Server $MBXServerName 
+        Invoke-Command -ComputerName $MBXServerName -Credential $Creds -Authentication Kerberos -ScriptBlock {iisreset } 
+        $Session | Remove-PSSession 
+}
+
+function Enable-ExchEdgeCertificate
+{
+Param(
+    [PARAMETER(Mandatory = $false)][switch]$Informative = $true,
+    [PARAMETER(Mandatory = $false)][switch]$Detailed = $true,
+    [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
+    [PARAMETER(Mandatory = $true)][string]$CertThumbprint,
+    [PARAMETER(Mandatory = $true)][string]$EdgeServerName
+     )
+    $Script = {
+    param ($Informative,$Detailed,$CertThumbprint,$EdgeServerName)
+    Import-Module ActiveDirectory
+    Add-PSSnapin *exchange*
+    $Server = Get-ExchangeServer $EdgeServerName
+    $TransportCert = (Get-ADObject -Identity $Server.DistinguishedName -Properties * -Server ($EdgeServerName+":50389")).msExchServerInternalTLSCert
+    $Cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+    $CertBlob = [System.Convert]::ToBase64String($TransportCert)
+    $Cert.Import([Convert]::FromBase64String($CertBlob))
+                            
+    if($Informative -or $Detailed) { Write-Host "The current default SMTP certificate has subject" $Cert.Subject ", frindly name:" $Cert.FriendlyName ", ThumbPrint:" $Cert.Thumbprint "and expires after:" $Cert.NotAfter -ForegroundColor Yellow}
+    $OriginalCertThumbprint = $Cert.Thumbprint
+
+    Enable-ExchangeCertificate -Thumbprint $CertThumbprint -Services SMTP -Force 
+    Enable-ExchangeCertificate -Thumbprint $OriginalCertThumbprint -Services SMTP -Force 
+
+    Get-Service -Name MSExch* -ComputerName $EdgeServerName | Restart-Service -Force 
+    Get-Service -Name MSExch* -ComputerName $EdgeServerName | Where-Object {$_.Status -ne "Running"} | Start-Service 
+
+    $Cert =$null
+    $TransportCert = (Get-ADObject -Identity $Server.DistinguishedName -Properties * -Server ($EdgeServerName+":50389")).msExchServerInternalTLSCert
+    $Cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+    $CertBlob = [System.Convert]::ToBase64String($TransportCert)
+    $Cert.Import([Convert]::FromBase64String($CertBlob))
+    if($Informative -or $Detailed) { Write-Host "The current default SMTP certificate has subject" $Cert.Subject ", frindly name:" $Cert.FriendlyName ", ThumbPrint:" $Cert.Thumbprint "and expires after:" $Cert.NotAfter -ForegroundColor Yellow}
+    }
+    Invoke-Command -ComputerName $EdgeServerName -Credential $Creds -Authentication Credssp -ScriptBlock $Script -ArgumentList $Informative,$Detailed,$CertThumbprint,$EdgeServerName
+}

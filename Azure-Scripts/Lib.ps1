@@ -164,3 +164,91 @@ Param(
     }
     Invoke-Command -ComputerName $EdgeServerName -Credential $Creds -Authentication Credssp -ScriptBlock $Script -ArgumentList $Informative,$Detailed,$CertThumbprint,$EdgeServerName
 }
+
+function Enable-ADFSCertificate 
+{
+param(
+        [PARAMETER(Mandatory = $false)][switch]$Informative,
+        [PARAMETER(Mandatory = $false)][switch]$Detailed,
+        [Parameter(Mandatory=$true)][string]$CertThumbprint,
+        [PARAMETER(Mandatory = $true)][string]$ADFSServerName,
+        [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
+        [Parameter(Mandatory=$false)][switch]$MainServer
+    )
+    
+    if($Informative -or $Detailed) { Write-Host "The current computer is:" $ADFSServerName -ForegroundColor Yellow}
+    
+    $Script=$null
+
+    if($MainServer)
+    {
+        $Script = 
+        {
+            param ($Informative,$Detailed,$Thumbprint)
+            if($Informative -or $Detailed) { Write-Host "Changing ADFS Certificate in AD FS Farm config" -ForegroundColor Yellow}
+            Set-AdfsCertificate -CertificateType Service-Communications -Thumbprint $Thumbprint
+        }
+        Invoke-Command -ComputerName $ADFSServerName -Credential $Creds -Authentication Credssp -ScriptBlock $Script -ArgumentList $Informative,$Detailed,$CertThumbprint
+        
+        if($Detailed) { Write-Host "Trying to get the AD FS Farm URL..." -ForegroundColor Cyan }
+        $ADFSFarmFQDN = Invoke-Command -ComputerName $ADFSServerName -Credential $Creds -Authentication Credssp -ScriptBlock {(Get-AdfsProperties).HostName}
+        if($Informative -or $Detailed) { Write-Host "The URL of the AD FS farm is: $ADFSFarmFQDN" -ForegroundColor Yellow}
+    }
+
+    if($Informative -or $Detailed) { Write-Host "Forcefully replacing the certificate on SSL Binding via netsh" -ForegroundColor Yellow}
+    $SSLBindingList = Get-SSLBindingNetsh -Informative:$Informative -Detailed:$Detailed -ComputerName $ADFSServerName -Creds $UserCredential
+
+    $ADFSApplicationId = ($SSLBindingList | Where-Object {$_.IPAddress -eq $ADFSFarmFQDN}).ApplicationId
+
+    $SSLBindingList | Where-Object {$_.ApplicationId -eq $ADFSApplicationId} | foreach `
+    {
+        Remove-SSLBindingNetsh -Informative:$Informative -Detailed:$Detailed -ComputerName $ADFSServerName -SSLBindingObject $_ -Creds $UserCredential
+
+        New-SSLBindingNetsh -Informative:$Informative -Detailed:$Detailed -ComputerName $ADFSServerName -SSLBindingObject $_ -Creds $UserCredential -NewSertThumbprint $CertThumbprint
+    }
+    if($Informative -or $Detailed) { Write-Host "Restarting Services" -ForegroundColor Yellow}
+    Invoke-Command -ComputerName $ADFSServerName -Credential $Creds -Authentication Credssp -ScriptBlock {Get-Service -Name adfssrv | Restart-Service -Force}
+}
+
+function Replace-WAPCertificate 
+{
+param(
+        [PARAMETER(Mandatory = $false)][switch]$Informative,
+        [PARAMETER(Mandatory = $false)][switch]$Detailed,
+        [Parameter(Mandatory=$true)][string]$CertThumbprint,
+        [PARAMETER(Mandatory = $true)][string]$WAPServerName,
+        [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
+        [Parameter(Mandatory=$false)][switch]$MainServer = $true
+    )
+
+    $ScriptBlock = $null 
+    
+    if($Informative -or $Detailed) { Write-Host "The current computer is:" $WAPServerName -ForegroundColor Yellow}
+
+    #Read-Host "Ready to replace the certificate on the farm?"
+    if($Informative -or $Detailed) { Write-Host "Changing WAP Certificate to $CertThumbprint in WAP Farm config" -ForegroundColor Yellow}
+    Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock { param ($CertThumbprint ); Set-WebApplicationProxySslCertificate -Thumbprint $CertThumbprint } -ArgumentList $CertThumbprint 
+
+    if($MainServer)
+    {
+        if($Informative -or $Detailed) { Write-Host "Replacing the certificate for all applications..." -ForegroundColor Yellow}
+        #Read-Host "Ready to replace the certificate on applications?"
+        
+        $ScriptBlock =
+        { 
+            param ($CertThumbprint)
+            $WebProxyApps = Get-WebApplicationProxyApplication 
+ 
+            foreach($WebProxyApp in $WebProxyApps )
+            {
+                Write-Host "Current Application is $($WebProxyApp.Name)."
+                Set-WebApplicationProxyApplication -ID $WebProxyApp.ID -ExternalCertificateThumbprint $CertThumbprint 
+            }
+        }
+        Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock $ScriptBlock -ArgumentList $CertThumbprint 
+    }
+
+    if($Informative -or $Detailed) { Write-Host "Restarting Services" -ForegroundColor Yellow}
+    Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock {Get-Service -Name adfssrv | Restart-Service -Force}
+    Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock {Get-Service -Name appproxysvc | Restart-Service -Force}
+}

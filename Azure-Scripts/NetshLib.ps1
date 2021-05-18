@@ -1,4 +1,4 @@
-﻿class SSlBinding
+﻿class SSLBinding
 {
     [string]$IPAddress #'IPAddress'
     [string]$Port # 'Port' 
@@ -218,12 +218,15 @@ function New-SSLBindingNetsh
             [PARAMETER(Mandatory = $true)][SSlBinding]$SSLBindingObject,
             [PARAMETER(Mandatory = $true)][string]$ComputerName,
             [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
-            [PARAMETER(Mandatory = $true)][string]$NewSertThumbprint
+            [PARAMETER(Mandatory = $true)][string]$NewCertThumbprint
         )
 
-    if($Informative -or $Detailed) { Write-Host "Creating an SSL binding for the $($SSLBindingObject.IPAddress):$($SSLBindingObject.Port) and the certificate: $($SSLBindingObject.CertificateHash)" -ForegroundColor Yellow    }
+    if($Informative -or $Detailed) { Write-Host "Creating an SSL binding for the $($SSLBindingObject.IPAddress):$($SSLBindingObject.Port) and the certificate: $($SSLBindingObject.CertificateHash)" -ForegroundColor Yellow }
     if($Detailed) { Write-Host "Current SSL Binding object is:" -ForegroundColor Cyan; $SSLBindingObject | Format-List  }
-    $ScriptString = "netsh http add sslcert hostnameport="+ $SSLBindingObject.IPAddress+':'+$SSLBindingObject.Port + " certhash="+ $NewSertThumbprint + " appid='"+$SSLBindingObject.ApplicationId+ "' certstorename="+ $SSLBindingObject.CertificateStoreName+" sslctlstorename="+ $SSLBindingObject.CtlStoreName
+    $ScriptString = "netsh http add sslcert hostnameport="+ $SSLBindingObject.IPAddress`
+                    +':'+$SSLBindingObject.Port + " certhash="+ $NewCertThumbprint`
+                    + " appid='"+$SSLBindingObject.ApplicationId+ "' certstorename=" `
+                    + $SSLBindingObject.CertificateStoreName+" sslctlstorename="+ $SSLBindingObject.CtlStoreName
     if($Detailed) { Write-Host "We are going to run the command: $ScriptString" -ForegroundColor Cyan  }
     $ScriptBlock = [Scriptblock]::Create($ScriptString) 
     Invoke-Command -ComputerName $ComputerName -ScriptBlock $ScriptBlock -Credential $Creds -Authentication Kerberos
@@ -239,7 +242,7 @@ function Remove-SSLBindingNetsh
             [PARAMETER(Mandatory = $true)][PSCredential]$Creds
         )
 
-    if($Informative -or $Detailed) { Write-Host "We are going to delete an SSL binding for the $($SSLBindingObject.IPAddress):$($SSLBindingObject.Port) and the certificate: $($SSLBindingObject.CertificateHash)" -ForegroundColor Yellow    }
+    if($Informative -or $Detailed) { Write-Host "We are going to delete an SSL binding for the $($SSLBindingObject.IPAddress):$($SSLBindingObject.Port) and the certificate: $($SSLBindingObject.CertificateHash)" -ForegroundColor Yellow}
     if($Detailed) { Write-Host "Current SSL Binding object is:" -ForegroundColor Cyan; $SSLBindingObject | Format-List  }
     $ScriptString = "netsh http delete sslcert hostnameport="+ $SSLBindingObject.IPAddress+':'+$SSLBindingObject.Port
     if($Detailed) { Write-Host "We are going to run the command: $ScriptString" -ForegroundColor Cyan  }

@@ -203,8 +203,7 @@ param(
     $SSLBindingList | Where-Object {$_.ApplicationId -eq $ADFSApplicationId} | foreach `
     {
         Remove-SSLBindingNetsh -Informative:$Informative -Detailed:$Detailed -ComputerName $ADFSServerName -SSLBindingObject $_ -Creds $UserCredential
-
-        New-SSLBindingNetsh -Informative:$Informative -Detailed:$Detailed -ComputerName $ADFSServerName -SSLBindingObject $_ -Creds $UserCredential -NewSertThumbprint $CertThumbprint
+        New-SSLBindingNetsh -Informative:$Informative -Detailed:$Detailed -ComputerName $ADFSServerName -SSLBindingObject $_ -Creds $UserCredential -NewCertThumbprint $CertThumbprint
     }
     if($Informative -or $Detailed) { Write-Host "Restarting Services" -ForegroundColor Yellow}
     Invoke-Command -ComputerName $ADFSServerName -Credential $Creds -Authentication Credssp -ScriptBlock {Get-Service -Name adfssrv | Restart-Service -Force}
@@ -218,7 +217,7 @@ param(
         [Parameter(Mandatory=$true)][string]$CertThumbprint,
         [PARAMETER(Mandatory = $true)][string]$WAPServerName,
         [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
-        [Parameter(Mandatory=$false)][switch]$MainServer = $true
+        [Parameter(Mandatory=$false)][switch]$MainServer
     )
 
     $ScriptBlock = $null 
@@ -251,4 +250,31 @@ param(
     if($Informative -or $Detailed) { Write-Host "Restarting Services" -ForegroundColor Yellow}
     Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock {Get-Service -Name adfssrv | Restart-Service -Force}
     Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock {Get-Service -Name appproxysvc | Restart-Service -Force}
+}
+
+function Enable-UCEdgeCertificate
+{
+Param(
+    [PARAMETER(Mandatory = $false)][switch]$Informative = $true,
+    [PARAMETER(Mandatory = $false)][switch]$Detailed = $true,
+    [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
+    [PARAMETER(Mandatory = $true)][string]$CertThumbprint,
+    [PARAMETER(Mandatory = $true)][string]$EdgeServerName
+     )
+    $Script = {
+    param ($Informative,$Detailed,$CertThumbprint,$EdgeServerName)
+    Import-Module SkypeForBusiness
+    
+    $CurrentCerts = Get-CsCertificate -Type AccessEdgeExternal,DataEdgeExternal,AudioVideoAuthentication,XmppServer
+
+    if($Informative -or $Detailed) { Write-Host "Replacing the external Edge Services certificate on the Edge Server: $EdgeServerName to the $CertThumbprint!" -ForegroundColor Yellow }
+    if($Detailed) { $CurrentCerts | foreach { Write-Host "The current certificate for the cervice $($_.Use), issued by $($_.Issuer), and has ThumbPrint: $($_.Thumbprint), expires after: $($_.NotAfter)" -ForegroundColor Cyan}  }
+    
+    Set-CSCertificate -Type AccessEdgeExternal,DataEdgeExternal,AudioVideoAuthentication,XmppServer -Thumbprint $CertThumbprint -Confirm:$false
+    Get-Service | Where-Object {$_.DisplayName -like "Skype for Business Server*"} | Restart-Service -Force
+    $UpdatedCerts = Get-CsCertificate -Type AccessEdgeExternal,DataEdgeExternal,AudioVideoAuthentication,XmppServer
+    
+    if($Detailed) { $UpdatedCerts | foreach { Write-Host "The current certificate for the cervice $($_.Use), issued by $($_.Issuer), and has ThumbPrint: $($_.Thumbprint), expires after: $($_.NotAfter)" -ForegroundColor Cyan}  }
+    }
+    Invoke-Command -ComputerName $EdgeServerName -Credential $Creds -Authentication Credssp -ScriptBlock $Script -ArgumentList $Informative,$Detailed,$CertThumbprint,$EdgeServerName
 }

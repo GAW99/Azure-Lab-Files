@@ -24,9 +24,9 @@ $OOSServers = @("OOS-1")
 $UCEdgeServers = @("UCED-P1")
 $UCFEServers = "UCFE-1","UCFE-2"
 $MBXServers = "EXCH-1","EXCH-2"
-$EdgeServers = @("EXED-1")
+$MBXEdgeServers = @("EXED-1")
 $Servers =  @()
-$Servers += $CAServers+$ADFSServers+$WAPServers+$OOSServers+$UCEdgeServers+$UCFEServers+$MBXServers+$EdgeServers
+$Servers += $CAServers+$ADFSServers+$WAPServers+$OOSServers+$UCEdgeServers+$UCFEServers+$MBXServers+$MBXEdgeServers
 
 $PasswordFileName = "Password.txt"
 $ADFSServiceAccountSAM = "SVC_ADFS-01$"
@@ -50,13 +50,14 @@ foreach($Server in $Servers)
 
 foreach($MBXServer in $MBXServers)
 {
-    $CurrentServerFQDN = $MBXServer+"."+$DomainFQDN
-   # Enable-ExchMBXCertificate -Informative:$Informative -Detailed:$Detailed -Creds $UserCredential -CertThumbprint $CertificateData.Thumbprint -MBXServerName $CurrentServerFQDN
+   $CurrentServerFQDN = $MBXServer+"."+$DomainFQDN
+   #Enable-ExchMBXCertificate -Informative:$Informative -Detailed:$Detailed -Creds $UserCredential -CertThumbprint $CertificateData.Thumbprint -MBXServerName $CurrentServerFQDN
+   #Enable-ExchMBXCertificate -Informative:$Informative -Detailed:$Detailed -Creds $UserCredential -CertThumbprint "ED3B33EE80912FB0F8DDF5236D0A042613F864AC" -MBXServerName $CurrentServerFQDN
 }
 
-foreach($EdgeServer in $EdgeServers)
+foreach($MBXEdgeServer in $MBXEdgeServers)
 {
-    $CurrentServerFQDN = $EdgeServer+"."+$DomainFQDN
+    $CurrentServerFQDN = $MBXEdgeServer+"."+$DomainFQDN
     #Enable-ExchEdgeCertificate -Informative:$Informative -Detailed:$Detailed -Creds $UserCredential -CertThumbprint $CertificateData.Thumbprint -EdgeServerName $CurrentServerFQDN
     #Enable-ExchEdgeCertificate -Informative:$Informative -Detailed:$Detailed -Creds $UserCredential -CertThumbprint "ED3B33EE80912FB0F8DDF5236D0A042613F864AC" -EdgeServerName $CurrentServerFQDN
 }
@@ -66,7 +67,7 @@ foreach($ADFSServer in $ADFSServers)
 {
     $CurrentServerFQDN = $ADFSServer+"."+$DomainFQDN     
     #Enable-ADFSCertificate -CertThumbprint "A16B8345C4760A774BC5AC2DACDAA3DF5B00DD37" -MainServer:$MainServerFlag -ADFSServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed    #test
-    Enable-ADFSCertificate -CertThumbprint "ED3B33EE80912FB0F8DDF5236D0A042613F864AC" -MainServer:$MainServerFlag -ADFSServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed #PROD
+    #Enable-ADFSCertificate -CertThumbprint "ED3B33EE80912FB0F8DDF5236D0A042613F864AC" -MainServer:$MainServerFlag -ADFSServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed #PROD
     #Enable-ADFSCertificate -CertThumbprint $CertificateData.Thumbprint -MainServer:$MainServerFlag -ADFSServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed 
     $MainServerFlag=$false
 }
@@ -76,9 +77,20 @@ foreach($WAPServer in $WAPServers)
 {
     $CurrentServerFQDN = $WAPServer+"."+$DomainFQDN     
     #Replace-WAPCertificate -CertThumbprint "A16B8345C4760A774BC5AC2DACDAA3DF5B00DD37" -MainServer:$MainServerFlag -WAPServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed    #test
-    Replace-WAPCertificate -CertThumbprint "ED3B33EE80912FB0F8DDF5236D0A042613F864AC" -MainServer:$MainServerFlag -WAPServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed #PROD
+    #Replace-WAPCertificate -CertThumbprint "ED3B33EE80912FB0F8DDF5236D0A042613F864AC" -MainServer:$MainServerFlag -WAPServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed #PROD
     #Replace-WAPCertificate -CertThumbprint $CertificateData.Thumbprint -MainServer:$MainServerFlag -WAPServerName $CurrentServerFQDN -Creds $UserCredential -Informative:$Informative -Detailed:$Detailed 
     $MainServerFlag=$false
 }
+
+foreach($UCEdgeServer in $UCEdgeServers)
+{
+    $CurrentServerFQDN = $UCEdgeServer+"."+$DomainFQDN
+    Enable-UCEdgeCertificate -Creds $UserCredential -EdgeServerName $CurrentServerFQDN -Informative:$Informative -Detailed:$Detailed -CertThumbprint B07B90A93EAEF5479CBC9F5DB306DD67A0A0DD3E
+   # Enable-UCEdgeCertificate -Creds $UserCredential -EdgeServerName $CurrentServerFQDN -Informative:$Informative -Detailed:$Detailed -CertThumbprint $CertificateData.Thumbprint
+
+    #B07B90A93EAEF5479CBC9F5DB306DD67A0A0DD3E - 3RD PArty
+    #87EA6DA851589AE2A64C86E5AD5599BB83BCD454 - Hybrid CA
+}
+
 
 # Submit-Renewal -AllOrders -Force

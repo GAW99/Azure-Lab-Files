@@ -28,12 +28,11 @@ Param(
         if($Informative -or $Detailed) {Write-Host "Conducting automated Windows DNS challenge" -ForegroundColor Yellow}
         $Cert = New-PACertificate $CertNames -AcceptTOS -Contact $ContactEmail -FriendlyName $CertFriendlyName -PfxPassSecure $CertPassword -Plugin Windows -PluginArgs @{WinServer=$DNSServerName; WinCred=$DNSServerCred} -Force
         #$Cert = New-PACertificate $CertNames -AcceptTOS -Contact $ContactEmail -FriendlyName $CertFriendlyName -PfxPass $CertPassword -Plugin Windows -PluginArgs @{WinServer=$DNSServerName; WinCred=$DNSServerCred; WinUseSSL=$true} -Force
-        #$Cert = New-PACertificate $CertNames -AcceptTOS -Contact $ContactEmail -FriendlyName "Mail" -PfxPass $CertPassword -Plugin Windows -PluginArgs @{WinServer=$DNSServerName; WinCred=$DNSServerCred} -Force
     }
     else
     {
         if($Informative -or $Detailed) {Write-Host "Conducting MANUAL DNS challenge" -ForegroundColor Yellow}
-        $Cert = New-PACertificate $CertNames -AcceptTOS -Contact $ContactEmail -FriendlyName $CertFriendlyName -PfxPass $CertPassword -Force
+        $Cert = New-PACertificate $CertNames -AcceptTOS -Contact $ContactEmail -FriendlyName $CertFriendlyName -PfxPass $CertPassword -Force 
     }
     return $cert
 }
@@ -55,7 +54,7 @@ Param(
     $PFXLocalDirectory = (Get-Item -Path $PFXLocalFileName).DirectoryName
     $PFXLocalName = (Get-Item -Path $PFXLocalFileName).Name
     
-    Get-ChildItem -Path $PFXLocalDirectory | Copy-Item -Destination X:\ -Force # only child items
+    Get-ChildItem -Path $PFXLocalDirectory | Copy-Item -Destination X:\ -Force 
     
     $CertPassword | ConvertFrom-SecureString -Key (1..16) | Out-File ("X:\"+$PasswordFileName) -Force
 }
@@ -78,14 +77,43 @@ Param(
     {
         param ($RootSharePath,$PFXFileName,$Informative,$Detailed,$PasswordFileName)
         $PFXDomainFullFileName = $RootSharePath+"\"+$PFXFileName
-        if($Informative -or $Detailed) { Write-Host "Current PFX file is:" $PFXDomainFullFileName -ForegroundColor Yellow}
+        if($Detailed) { Write-Host "Current PFX file is:" $PFXDomainFullFileName -ForegroundColor Cyan}
         $SecurePasswordEncrypted = Get-Content -Path ($RootSharePath+"\"+$PasswordFileName)
-        if($Informative -or $Detailed) { Write-Host "Getting password from the file:"$RootSharePath"\"$PasswordFileName -ForegroundColor Yellow}
+        if($Detailed) { Write-Host "Getting password from the file:"$RootSharePath"\"$PasswordFileName -ForegroundColor Cyan}
         $SecurePassword = ($SecurePasswordEncrypted | ConvertTo-SecureString -Key (1..16))
         Import-PfxCertificate -FilePath $PFXDomainFullFileName -CertStoreLocation Cert:\LocalMachine\my -Password $SecurePassword -Confirm:$false
     }
 
     Invoke-Command -ComputerName $ComputerFQDN -Credential $Creds -Authentication Credssp -ScriptBlock $Script -ArgumentList $RootSharePath,$PFXFileName,$Informative,$Detailed,$PasswordFileName
+}
+
+function Install-LECertificateLegacy
+{
+Param(
+    [PARAMETER(Mandatory = $false)][switch]$Informative,
+    [PARAMETER(Mandatory = $false)][switch]$Detailed,
+    [PARAMETER(Mandatory = $true)][string]$RootSharePath,
+    [PARAMETER(Mandatory = $true)][PSCredential]$Creds,
+    [PARAMETER(Mandatory = $true)][String]$PFXFileName, 
+    [PARAMETER(Mandatory = $true)][String]$PasswordFileName,
+    [PARAMETER(Mandatory = $true)][String]$ComputerFQDN
+    )
+    
+    if($Informative -or $Detailed) { Write-Host "Installing the certificate to the Personal storage of the computer: $ComputerFQDN, using certutil!" -ForegroundColor Yellow}
+    $PFXDomainFullFileName = $RootSharePath+"\"+$PFXFileName
+    if($Detailed) { Write-Host "Current PFX file is:" $PFXDomainFullFileName -ForegroundColor Cyan}
+    $SecurePasswordEncrypted = Get-Content -Path ($RootSharePath+"\"+$PasswordFileName)
+    if($Detailed) { Write-Host "Getting password from the file:"$RootSharePath"\"$PasswordFileName -ForegroundColor Cyan}
+    $TmpSecureString = ConvertTo-SecureString -String ($SecurePasswordEncrypted) -Key (1..16)
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($TmpSecureString)
+    $NotSecurePassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    
+    $ScriptString = "certutil.exe -p """+$NotSecurePassword + """ -csp ""Microsoft Enhanced Cryptographic Provider v1.0"" -importPFX """ +  $PFXDomainFullFileName + '"'
+    
+    if($Detailed) { Write-Host "We are going to run the command: $ScriptString" -ForegroundColor Cyan  }
+    $ScriptBlock = [Scriptblock]::Create($ScriptString) 
+    
+    Invoke-Command -ComputerName $ComputerFQDN -Credential $Creds -Authentication Credssp -ScriptBlock $ScriptBlock 
 }
 
 function CleanUP-LECertificate
@@ -224,14 +252,12 @@ param(
     
     if($Informative -or $Detailed) { Write-Host "The current computer is:" $WAPServerName -ForegroundColor Yellow}
 
-    #Read-Host "Ready to replace the certificate on the farm?"
     if($Informative -or $Detailed) { Write-Host "Changing WAP Certificate to $CertThumbprint in WAP Farm config" -ForegroundColor Yellow}
     Invoke-Command -ComputerName $WAPServerName -Credential $Creds -Authentication Credssp -ScriptBlock { param ($CertThumbprint ); Set-WebApplicationProxySslCertificate -Thumbprint $CertThumbprint } -ArgumentList $CertThumbprint 
 
     if($MainServer)
     {
         if($Informative -or $Detailed) { Write-Host "Replacing the certificate for all applications..." -ForegroundColor Yellow}
-        #Read-Host "Ready to replace the certificate on applications?"
         
         $ScriptBlock =
         { 
@@ -271,7 +297,8 @@ Param(
     if($Detailed) { $CurrentCerts | foreach { Write-Host "The current certificate for the cervice $($_.Use), issued by $($_.Issuer), and has ThumbPrint: $($_.Thumbprint), expires after: $($_.NotAfter)" -ForegroundColor Cyan}  }
     
     Set-CSCertificate -Type AccessEdgeExternal,DataEdgeExternal,AudioVideoAuthentication,XmppServer -Thumbprint $CertThumbprint -Confirm:$false
-    Get-Service | Where-Object {$_.DisplayName -like "Skype for Business Server*"} | Restart-Service -Force
+    Stop-CsWindowsService | Out-Null
+    Start-CsWindowsService | Out-Null 
     $UpdatedCerts = Get-CsCertificate -Type AccessEdgeExternal,DataEdgeExternal,AudioVideoAuthentication,XmppServer
     
     if($Detailed) { $UpdatedCerts | foreach { Write-Host "The current certificate for the cervice $($_.Use), issued by $($_.Issuer), and has ThumbPrint: $($_.Thumbprint), expires after: $($_.NotAfter)" -ForegroundColor Cyan}  }

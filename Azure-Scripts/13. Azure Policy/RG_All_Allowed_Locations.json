@@ -1,0 +1,52 @@
+{
+    "metadata": 
+	{
+      "category": "Location"
+    },
+	"parameters": 
+	{
+		"allowedLocations": 
+		{
+			"type": "array",
+			"metadata": 
+			{
+				"description": "The list of allowed locations for Resource groups.",
+				"displayName": "Allowed locations",
+				"strongType": "location"
+			},
+			"defaultValue": [ "northeurope", "westeurope"],
+			"allowedValues": 
+			[
+				"northeurope",
+				"westeurope",
+				"ukwest",
+				"uksouth" 
+			]
+		}
+	},
+    "policyRule": 	
+	{
+		"if": 
+		{
+			"allOf": 
+			[
+				{
+					"not":
+					{
+						"field": "location",
+						"in": "[parameters('allowedLocations')]"
+					
+					}
+				},
+				{
+					"field": "type",
+					"equals": "Microsoft.Resources/subscriptions/resourceGroups"
+				}
+			]
+		},
+		"then": 
+		{
+			"effect": "deny"			
+		}
+	}
+}

@@ -1,0 +1,60 @@
+		{
+            "Tag1Name": 
+			{
+                "type": "String",
+                "metadata": 
+				{
+					"displayName": "The first tag name",
+                    "description": "The first tag name"
+                },
+                "defaultValue": "Environment"
+            },
+            "Tag1DafaultValue": 
+			{
+                "type": "String",
+                "metadata": 
+				{
+					"displayName": "The first tag default value",
+                    "description": "The first tag default value"
+                },
+                "defaultValue": "Lab"
+            },
+			"Tag2Name": 
+			{
+                "type": "String",
+                "metadata": 
+				{
+					"displayName": "The second tag name",
+                    "description": "The second tag name"
+                },
+                "defaultValue": "Project"
+            },
+            "Tag2DafaultValue": 
+			{
+                "type": "String",
+                "metadata": 
+				{	
+					"displayName": "The second tag default value",
+                    "description": "The second tag default value"
+                },
+                "defaultValue": "Azure Migration"
+            },
+			"allowedLocations": 
+			{
+				"type": "array",
+				"metadata": 
+				{
+					"description": "The list of allowed locations for Resource groups.",
+					"displayName": "Allowed locations",
+					"strongType": "location"
+				},
+				"defaultValue": [ "northeurope", "westeurope"],
+				"allowedValues": 
+				[
+					"northeurope",
+					"westeurope",
+					"ukwest",
+					"uksouth" 
+				]
+			}
+        }

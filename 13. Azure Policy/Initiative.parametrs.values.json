@@ -1,0 +1,22 @@
+{
+            "Tag1Name": 
+			{
+                "value": "Environment"
+            },
+            "Tag1DafaultValue": 
+			{                
+                "value": "Lab"
+            },
+			"Tag2Name": 
+			{                
+                "value": "Project"
+            },
+            "Tag2DafaultValue": 
+			{               
+                "value": "Azure Migration"
+            },
+			"allowedLocations": 
+			{
+				"value": [ "northeurope", "westeurope"]				
+			}
+ }

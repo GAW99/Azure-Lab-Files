@@ -1,0 +1,3 @@
+"DescriptiveText";"DistinguishedName";"HostName";"RecordClass";"RecordData";"RecordType";"Timestamp";"TimeToLive";"Type";"PSComputerName"
+"MS=ms73522981";"@";"@";"IN";"DnsServerResourceRecordTxt";"TXT";;"01:00:00";"16";
+"v=spf1 mx include:spf.protection.outlook.com -all";"@";"@";"IN";"DnsServerResourceRecordTxt";"TXT";;"01:00:00";"16";

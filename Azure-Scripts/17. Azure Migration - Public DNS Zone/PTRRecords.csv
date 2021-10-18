@@ -1,0 +1,3 @@
+"PtrDomainName";"DistinguishedName";"HostName";"RecordClass";"RecordData";"RecordType";"Timestamp";"TimeToLive";"Type";"PSComputerName"
+"exedge.gaw00.tk.";"64";"64";"IN";"DnsServerResourceRecordPtr";"PTR";;"01:00:00";"12";
+"mail.gaw00.tk.";"64";"64";"IN";"DnsServerResourceRecordPtr";"PTR";;"01:00:00";"12";

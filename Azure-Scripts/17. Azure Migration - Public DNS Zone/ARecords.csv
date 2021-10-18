@@ -1,0 +1,4 @@
+"IPv4Address";"DistinguishedName";"HostName";"RecordClass";"RecordData";"RecordType";"Timestamp";"TimeToLive";"Type";"PSComputerName"
+"95.31.43.64";"exedge";"exedge";"IN";"DnsServerResourceRecordA";"A";;"01:00:00";"1";
+"52.178.202.184";"HUBVNetGW";"HUBVNetGW";"IN";"DnsServerResourceRecordA";"A";;"01:00:00";"1";
+"95.31.43.64";"mail";"mail";"IN";"DnsServerResourceRecordA";"A";;"01:00:00";"1";

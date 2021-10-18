@@ -1,0 +1,13 @@
+"HostNameAlias";"DistinguishedName";"HostName";"RecordClass";"RecordData";"RecordType";"Timestamp";"TimeToLive";"Type";"PSComputerName"
+"GAW.ZAPTO.ORG.";"ACCESS";"ACCESS";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"ADFS-C1";"ADFS-C1";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"autodiscover";"autodiscover";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"CA";"CA";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"dialin";"dialin";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"enterpriseregistration";"enterpriseregistration";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"lyncdiscover";"lyncdiscover";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"meet";"meet";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"oos-f1";"oos-f1";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"scheduler";"scheduler";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"sip";"sip";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";
+"gaw.zapto.org.";"ucfe-p1";"ucfe-p1";"IN";"DnsServerResourceRecordCName";"CNAME";;"01:00:00";"5";

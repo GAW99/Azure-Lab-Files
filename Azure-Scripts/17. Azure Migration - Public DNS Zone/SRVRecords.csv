@@ -1,0 +1,2 @@
+"DomainName";"Port";"Priority";"Weight";"DistinguishedName";"HostName";"RecordClass";"RecordData";"RecordType";"Timestamp";"TimeToLive";"Type";"PSComputerName"
+"access.gaw00.tk.";"5061";"0";"0";"_sipfederationtls._tcp";"_sipfederationtls._tcp";"IN";"DnsServerResourceRecordSrv";"SRV";;"01:00:00";"33";

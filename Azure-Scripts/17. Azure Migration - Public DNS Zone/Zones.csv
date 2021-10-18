@@ -1,0 +1,8 @@
+"NotifyServers";"SecondaryServers";"AllowedDcForNsRecordsAutoCreation";"DistinguishedName";"IsAutoCreated";"IsDsIntegrated";"IsPaused";"IsReadOnly";"IsReverseLookupZone";"IsShutdown";"ZoneName";"ZoneType";"DirectoryPartitionName";"DynamicUpdate";"IgnorePolicies";"IsSigned";"IsWinsEnabled";"Notify";"ReplicationScope";"SecureSecondaries";"ZoneFile";"PSComputerName"
+;;;;"True";"False";"False";"False";"True";"False";"0.in-addr.arpa";"Primary";;"None";"True";"False";"False";"Notify";"None";"TransferToZoneNameServer";;
+;;;;"True";"False";"False";"False";"True";"False";"127.in-addr.arpa";"Primary";;"None";"True";"False";"False";"Notify";"None";"TransferToZoneNameServer";;
+;;;;"True";"False";"False";"False";"True";"False";"255.in-addr.arpa";"Primary";;"None";"True";"False";"False";"Notify";"None";"TransferToZoneNameServer";;
+;;;;"False";"False";"False";"False";"True";"False";"43.31.95.in-addr.arpa";"Primary";;"None";"False";"False";"False";"Notify";"None";"TransferToZoneNameServer";"43.31.95.in-addr.arpa.dns";
+;;;;"False";"False";"False";"False";"False";"False";"gaw00.local";"Forwarder";;;;;;;"None";;;
+;;;;"False";"False";"False";"False";"False";"False";"gaw00.tk";"Primary";;"None";"False";"False";"False";"Notify";"None";"TransferToZoneNameServer";"gaw00.tk.dns";
+;;;;"False";"False";"False";"False";"False";"False";"TrustAnchors";"Primary";;"None";"False";"False";"False";"Notify";"None";"TransferToZoneNameServer";"TrustAnchors.dns";
